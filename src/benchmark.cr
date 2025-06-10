@@ -1,6 +1,7 @@
 require "benchmark"
 
 def fibonacci(n : Int32) : Int32
+  sleep 2.seconds
   return 0 if n < 0
   return n if n <= 1
   fibonacci(n - 1) + fibonacci(n - 2)
