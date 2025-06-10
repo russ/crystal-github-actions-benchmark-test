@@ -96,6 +96,8 @@ jobs:
             cat "$PR_COMMENT"
           } > temp_comment.md
 
+          cat temp_comment.md
+
           mv temp_comment.md "$PR_COMMENT"
 
       - name: Comment PR
