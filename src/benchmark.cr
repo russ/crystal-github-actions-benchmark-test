@@ -8,10 +8,10 @@ end
 
 Benchmark.ips(warmup: 4.seconds, calculation: 10.seconds) do |x|
   x.report("fibonacci(10)") do
-    fibonacci(999)
+    fibonacci(20)
   end
 
   x.report("fibonacci(20)") do
-    fibonacci(20)
+    fibonacci(40)
   end
 end
