@@ -53,6 +53,11 @@ jobs:
           printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> $3
           printf "|-----------|-----------------|------------------|-------|\n" >> $3
 
+          echo "Comparing benchmarks:"
+          cat $BASE_FILE
+          echo " == vs == "
+          cat $CONTENDER_FILE
+
           while IFS=$'\t' read -r base_line contender_line; do
             bench_name=$(echo "$base_line" | awk '{print $1}')
             base_ns=$(echo "$base_line" | grep -oP '\(\s*\K[0-9.]+(?=ns)')
