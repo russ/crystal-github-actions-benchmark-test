@@ -5,6 +5,7 @@ def fibonacci(n : Int32) : Int32
   # return n if n <= 1
   # fibonacci(n - 1) + fibonacci(n - 2)
   sleep n.seconds
+  n
 end
 
 Benchmark.ips(warmup: 1.seconds, calculation: 1.seconds) do |x|
