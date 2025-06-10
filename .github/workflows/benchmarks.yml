@@ -61,14 +61,26 @@ jobs:
           
           paste "$BASE_FILE" "$CONTENDER_FILE" | while IFS=$'\t' read -r base_line contender_line; do
             bench_name=$(echo "$base_line" | awk '{print $1}')
-            base_ns=$(echo "$base_line" | grep -oP '\(\s*\K[0-9.]+(?=ns)')
-            contender_ns=$(echo "$contender_line" | grep -oP '\(\s*\K[0-9.]+(?=ns|µs)')
+            
+            parse_time_ns() {
+              input="$1"
+              time=$(echo "$input" | grep -oP '\(\s*\K[0-9.]+')
+              unit=$(echo "$input" | grep -oP '\(\s*[0-9.]+\K[a-zµ]+')
           
-            if echo "$contender_line" | grep -q "µs"; then
-              contender_ns=$(awk "BEGIN {print $contender_ns * 1000}")
-            fi
+              case "$unit" in
+                ns) echo "$time" ;;
+                µs) awk "BEGIN {print $time * 1000}" ;;
+                ms) awk "BEGIN {print $time * 1000000}" ;;
+                s)  awk "BEGIN {print $time * 1000000000}" ;;
+                *)  echo "" ;;
+              esac
+            }
+          
+            base_ns=$(parse_time_ns "$base_line")
+            contender_ns=$(parse_time_ns "$contender_line")
           
             if [[ -z "$base_ns" || -z "$contender_ns" ]]; then
+              printf "| %s | %s | %s | %s |\n" "$bench_name" "${contender_ns:-N/A}" "${base_ns:-N/A}" "N/A" >> "$OUTPUT_FILE"
               continue
             fi
           
