@@ -28,6 +28,11 @@ jobs:
           echo "CONTENDER_FILE=contender.txt" >> $GITHUB_ENV
           echo "PR_COMMENT=pr_comment.md" >> $GITHUB_ENV
 
+      - name: Fetch base and head commits
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.sha }}
+          git fetch origin ${{ github.event.pull_request.head.sha }}
+
       - name: Run benchmarks
         run: |
           RUN_BENCHMARK="./bin/benchmark"
