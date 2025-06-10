@@ -89,7 +89,9 @@ jobs:
             echo "Benchmark comparison for [\`${BASE_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.base.sha }}) (base) vs [\`${HEAD_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }}) (PR)"
             echo ""
             cat "$PR_COMMENT"
-          } > "$PR_COMMENT"
+          } > temp_comment.md
+
+          mv temp_comment.md "$PR_COMMENT"
 
       - name: Comment PR
         uses: actions/github-script@v4.0.2
