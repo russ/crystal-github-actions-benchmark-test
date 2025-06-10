@@ -8,7 +8,7 @@ def fibonacci(n : Int32) : Int32
   n
 end
 
-Benchmark.ips(warmup: 1.seconds, calculation: 1.seconds) do |x|
+Benchmark.ips(warmup: 4.seconds, calculation: 10.seconds) do |x|
   x.report("fibonacci(10)") do
     fibonacci(10)
   end
