@@ -53,7 +53,7 @@ jobs:
           printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> $3
           printf "|-----------|-----------------|------------------|-------|\n" >> $3
 
-          while IFS= read -r base_line && IFS= read -r contender_line <&3; do
+          paste "$BASE_FILE" "$CONTENDER_FILE" | while IFS=$'\t' read -r base_line contender_line; do
             bench_name=$(echo "$base_line" | awk '{print $1}')
             base_ns=$(echo "$base_line" | grep -oP '\(\s*\K[0-9.]+(?=ns)')
             contender_ns=$(echo "$contender_line" | grep -oP '\(\s*\K[0-9.]+(?=ns|µs)')
