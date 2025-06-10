@@ -28,11 +28,6 @@ jobs:
           echo "CONTENDER_FILE=contender.txt" >> $GITHUB_ENV
           echo "PR_COMMENT=pr_comment.md" >> $GITHUB_ENV
 
-          echo "Comparing benchmarks for PR #${{ github.event.pull_request.number }}"
-          cat baseline.txt
-          echo " == vs == "
-          cat contender.txt
-
       - name: Run benchmarks
         run: |
           RUN_BENCHMARK="./bin/benchmark"
@@ -42,6 +37,11 @@ jobs:
 
           git checkout ${{ github.event.pull_request.head.sha }}
           $RUN_BENCHMARK > "$CONTENDER_FILE"
+
+          echo "Comparing benchmarks for PR #${{ github.event.pull_request.number }}"
+          cat "$BASELINE_FILE"
+          echo " == vs == "
+          cat "$CONTENDER_FILE"
 
       - name: Compare results
         run: |
