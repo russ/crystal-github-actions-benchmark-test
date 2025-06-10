@@ -9,12 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: crystal-lang/install-crystal@v1
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 50 # to obtain base commit
 
-      - name: Setup LLVM (Linux)
+      - name: Build benchmark
         run: shards build benchmark --production --release
 
       - name: Setup benchmark file paths and commit SHAs
