@@ -1,0 +1,6 @@
+name: github-actions-benchmark-test
+version: 0.1.0
+
+targets:
+  benchmark:
+    main: src/benchmark.cr

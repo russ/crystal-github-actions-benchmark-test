@@ -1,0 +1,104 @@
+name: Benchmarks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 50 # to obtain base commit
+
+      - name: Setup LLVM (Linux)
+        run: shards build benchmark --production --release
+
+      - name: Setup benchmark file paths and commit SHAs
+        run: |
+          echo "BASE_SHA=$(echo ${{ github.event.pull_request.base.sha }} | cut -c1-8)" >> $GITHUB_ENV
+          echo "HEAD_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-8)" >> $GITHUB_ENV
+
+          echo "BASELINE_FILE=baseline.txt" >> $GITHUB_ENV
+          echo "CONTENDER_FILE=contender.txt" >> $GITHUB_ENV
+          echo "PR_COMMENT=pr_comment.md" >> $GITHUB_ENV
+
+      - name: Run benchmarks
+        run: |
+          RUN_BENCHMARK="./bin/benchmark"
+
+          git checkout ${{ github.event.pull_request.base.sha }}
+          $RUN_BENCHMARK > "$BASELINE_FILE"
+
+          git checkout ${{ github.event.pull_request.head.sha }}
+          $RUN_BENCHMARK > "$CONTENDER_FILE"
+
+      - name: Compare results
+        run: |
+          # Comparison script
+          cat << 'EOF' > compare.sh
+          #!/usr/bin/env bash
+          BASE_FILE="$1"
+          CONTENDER_FILE="$2"
+          THRESHOLD=2
+
+          echo "### ⚠️ Performance Report" > $3
+          echo "" >> $3
+          regression_found=false
+          printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> $3
+          printf "|-----------|-----------------|------------------|-------|\n" >> $3
+
+          while IFS= read -r base_line && IFS= read -r contender_line <&3; do
+            bench_name=$(echo "$base_line" | awk '{print $1}')
+            base_ns=$(echo "$base_line" | grep -oP '\(\s*\K[0-9.]+(?=ns)')
+            contender_ns=$(echo "$contender_line" | grep -oP '\(\s*\K[0-9.]+(?=ns|µs)')
+
+            if echo "$contender_line" | grep -q "µs"; then
+              contender_ns=$(awk "BEGIN {print $contender_ns * 1000}")
+            fi
+
+            if [[ -z "$base_ns" || -z "$contender_ns" ]]; then
+              continue
+            fi
+
+            ratio=$(awk "BEGIN {printf \"%.3f\", $contender_ns / $base_ns}")
+            printf "| %s | %.2f | %.2f | %.3f |\n" "$bench_name" "$contender_ns" "$base_ns" "$ratio" >> $3
+
+            if (( $(echo "$ratio > $THRESHOLD" | bc -l) )); then
+              regression_found=true
+            fi
+          done <"$1" 3<"$2"
+
+          echo "" >> $3
+          if $regression_found; then
+            echo "⚠️ **Performance regression detected.** One or more benchmarks exceeded the slowdown threshold of $THRESHOLD×." >> $3
+          else
+            echo "✅ **No significant performance regressions detected.**" >> $3
+          fi
+          EOF
+
+          chmod +x compare.sh
+          ./compare.sh "$BASELINE_FILE" "$CONTENDER_FILE" "$PR_COMMENT"
+
+          {
+            echo "Benchmark comparison for [\`${BASE_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.base.sha }}) (base) vs [\`${HEAD_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }}) (PR)"
+            echo ""
+            cat "$PR_COMMENT"
+          } > "$PR_COMMENT"
+
+      - name: Comment PR
+        uses: actions/github-script@v4.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync(process.env.PR_COMMENT, 'utf8');
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
