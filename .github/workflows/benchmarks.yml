@@ -13,11 +13,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 50 # to obtain base commit
-
-      - name: Build benchmark
-        run: shards build benchmark --production --release
 
       - name: Setup benchmark file paths and commit SHAs
         run: |
@@ -37,21 +32,13 @@ jobs:
         run: |
           RUN_BENCHMARK="./bin/benchmark"
 
-          echo "Comparing benchmarks for PR #${{ github.event.pull_request.number }}"
-          echo "Base commit: ${{ github.event.pull_request.base.sha }}"
-
           git checkout ${{ github.event.pull_request.base.sha }}
+          shards build benchmark --production --release
           $RUN_BENCHMARK > "$BASELINE_FILE"
 
-          cat "$BASELINE_FILE"
-
-          echo " == vs == "
-
-          echo "Contender commit: ${{ github.event.pull_request.head.sha }}"
           git checkout ${{ github.event.pull_request.head.sha }}
+          shards build benchmark --production --release
           $RUN_BENCHMARK > "$CONTENDER_FILE"
-
-          cat "$CONTENDER_FILE"
 
       - name: Compare results
         run: |
