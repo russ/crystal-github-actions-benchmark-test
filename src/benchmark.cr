@@ -1,10 +1,9 @@
 require "benchmark"
 
 def fibonacci(n : Int32) : Int32
-  return 0
-  # return 0 if n < 0
-  # return n if n <= 1
-  # fibonacci(n - 1) + fibonacci(n - 2)
+  return 0 if n < 0
+  return n if n <= 1
+  fibonacci(n - 1) + fibonacci(n - 2)
 end
 
 Benchmark.ips(warmup: 1.seconds, calculation: 1.seconds) do |x|
