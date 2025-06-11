@@ -49,7 +49,18 @@ jobs:
           # Comparison script
           cat << 'EOF' > compare.sh
           #!/usr/bin/env bash
-
+          BASE_FILE="$1"
+          CONTENDER_FILE="$2"
+          OUTPUT_FILE="$3"
+          THRESHOLD=2
+          
+          echo "### ⚠️ Performance Report" > "$OUTPUT_FILE"
+          echo "" >> "$OUTPUT_FILE"
+          regression_found=false
+          printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> "$OUTPUT_FILE"
+          printf "|-----------|-----------------|------------------|-------|\n" >> "$OUTPUT_FILE"
+          
+          echo "Comparing benchmarks:"
           cat "$BASE_FILE"
           echo " == vs == "
           cat "$CONTENDER_FILE"
