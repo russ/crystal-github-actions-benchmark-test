@@ -47,35 +47,33 @@ jobs:
           # Comparison script
           cat << 'EOF' > compare.sh
           #!/usr/bin/env bash
+          
           BASE_FILE="$1"
           CONTENDER_FILE="$2"
           OUTPUT_FILE="$3"
           THRESHOLD=2
           
+          REGRESSION_FLAG_FILE=$(mktemp)
+          
           echo "### ⚠️ Performance Report" > "$OUTPUT_FILE"
           echo "" >> "$OUTPUT_FILE"
-          regression_found=false
           printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> "$OUTPUT_FILE"
           printf "|-----------|-----------------|------------------|-------|\n" >> "$OUTPUT_FILE"
           
           paste "$BASE_FILE" "$CONTENDER_FILE" | while IFS=$'\t' read -r base_line contender_line; do
             bench_name=$(echo "$base_line" | awk '{print $1}' | sed 's/\x1b\[[0-9;]*m//g')
-            
+          
             parse_time_ns() {
               local input="$1"
               local time unit
-            
-              # Remove commas and normalize spacing
+          
               cleaned=$(echo "$input" | tr -d ',')
-            
-              # Extract time and unit inside parentheses (e.g., ( 250.30ns))
+          
               time=$(echo "$cleaned" | grep -oP '\(\s*\K[0-9.]+(?=[a-zµ]+)')
               unit=$(echo "$cleaned" | grep -oP '\(\s*[0-9.]+\K[a-zµ]+')
-            
-              # Fallback if unit detection failed
+          
               [[ -z "$unit" ]] && unit="ns"
-            
-              # Convert based on unit
+          
               case "$unit" in
                 ns) echo "$time" ;;
                 µs) awk "BEGIN {printf \"%.6f\", $time * 1000}" ;;
@@ -97,16 +95,18 @@ jobs:
             printf "| %s | %.2f | %.2f | %.3f |\n" "$bench_name" "$contender_ns" "$base_ns" "$ratio" >> "$OUTPUT_FILE"
           
             if (( $(echo "$ratio > $THRESHOLD" | bc -l) )); then
-              regression_found=true
+              echo "regression" > "$REGRESSION_FLAG_FILE"
             fi
           done
           
           echo "" >> "$OUTPUT_FILE"
-          if $regression_found; then
-            echo "⚠️ **Performance regression detected.** One or more benchmarks exceeded the slowdown threshold of $THRESHOLD×." >> "$OUTPUT_FILE"
+          if [[ -f "$REGRESSION_FLAG_FILE" ]]; then
+            echo "⚠️ **Performance regression detected.** One or more benchmarks exceeded the slowdown threshold of ${THRESHOLD}×." >> "$OUTPUT_FILE"
           else
             echo "✅ **No significant performance regressions detected.**" >> "$OUTPUT_FILE"
           fi
+          
+          rm -f "$REGRESSION_FLAG_FILE"
           EOF
 
           chmod +x compare.sh
