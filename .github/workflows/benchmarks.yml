@@ -110,7 +110,7 @@ jobs:
           EOF
 
           chmod +x compare.sh
-          ./compare.sh "$CONTENDER_FILE" "$BASELINE_FILE" "$PR_COMMENT"
+          ./compare.sh "$BASELINE_FILE" "$CONTENDER_FILE" "$PR_COMMENT"
 
           {
             echo "Benchmark comparison for [\`${BASE_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.base.sha }}) (base) vs [\`${HEAD_SHA}\`](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }}) (PR)"
