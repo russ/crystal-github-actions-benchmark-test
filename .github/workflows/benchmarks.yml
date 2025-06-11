@@ -34,11 +34,13 @@ jobs:
 
           git checkout ${{ github.event.pull_request.base.sha }}
           cat src/benchmark.cr
+          rm -rf ./bin ./lib
           shards build benchmark --production --release
           $RUN_BENCHMARK > "$BASELINE_FILE"
 
           git checkout ${{ github.event.pull_request.head.sha }}
           cat src/benchmark.cr
+          rm -rf ./bin ./lib
           shards build benchmark --production --release
           $RUN_BENCHMARK > "$CONTENDER_FILE"
 
