@@ -4,7 +4,7 @@ def fibonacci(n : Int32) : Int32
   return 0 if n < 0
   return n if n <= 1
 
-  (1..1000).each { |i| Math.sqrt(i.to_f) }
+  (1..100000).each { |i| Math.sqrt(i.to_f) }
 
   fibonacci(n - 1) + fibonacci(n - 2)
 end
