@@ -33,10 +33,12 @@ jobs:
           RUN_BENCHMARK="./bin/benchmark"
 
           git checkout ${{ github.event.pull_request.base.sha }}
+          cat src/benchmark.cr
           shards build benchmark --production --release
           $RUN_BENCHMARK > "$BASELINE_FILE"
 
           git checkout ${{ github.event.pull_request.head.sha }}
+          cat src/benchmark.cr
           shards build benchmark --production --release
           $RUN_BENCHMARK > "$CONTENDER_FILE"
 
