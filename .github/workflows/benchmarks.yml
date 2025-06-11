@@ -72,14 +72,16 @@ jobs:
               local input="$1"
               local time unit
             
+              # remove commas and extract numeric part
               time=$(echo "$input" | grep -oP '\(\s*\K[0-9.]+')
               unit=$(echo "$input" | grep -oP '\(\s*[0-9.]+\K[a-zµs]+')
             
+              # normalize time scale
               case "$unit" in
                 ns) echo "$time" ;;
-                µs) awk "BEGIN {print $time * 1000}" ;;
-                ms) awk "BEGIN {print $time * 1000000}" ;;
-                s)  awk "BEGIN {print $time * 1000000000}" ;;
+                µs) awk "BEGIN {printf \"%.6f\", $time * 1000}" ;;
+                ms) awk "BEGIN {printf \"%.6f\", $time * 1000000}" ;;
+                s)  awk "BEGIN {printf \"%.6f\", $time * 1000000000}" ;;
                 *)  echo "" ;;
               esac
             }
