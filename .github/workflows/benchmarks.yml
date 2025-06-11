@@ -49,34 +49,29 @@ jobs:
           # Comparison script
           cat << 'EOF' > compare.sh
           #!/usr/bin/env bash
-          BASE_FILE="$1"
-          CONTENDER_FILE="$2"
-          OUTPUT_FILE="$3"
-          THRESHOLD=2
-          
-          echo "### ⚠️ Performance Report" > "$OUTPUT_FILE"
-          echo "" >> "$OUTPUT_FILE"
-          regression_found=false
-          printf "| Benchmark | Current (ns/op) | Previous (ns/op) | Ratio |\n" >> "$OUTPUT_FILE"
-          printf "|-----------|-----------------|------------------|-------|\n" >> "$OUTPUT_FILE"
-          
-          echo "Comparing benchmarks:"
+
           cat "$BASE_FILE"
           echo " == vs == "
           cat "$CONTENDER_FILE"
           
           paste "$BASE_FILE" "$CONTENDER_FILE" | while IFS=$'\t' read -r base_line contender_line; do
-            bench_name=$(echo "$base_line" | awk '{print $1}')
+            bench_name=$(echo "$base_line" | awk '{print $1}' | sed 's/\x1b\[[0-9;]*m//g')
             
             parse_time_ns() {
               local input="$1"
               local time unit
             
-              # remove commas and extract numeric part
-              time=$(echo "$input" | grep -oP '\(\s*\K[0-9.]+')
-              unit=$(echo "$input" | grep -oP '\(\s*[0-9.]+\K[a-zµs]+')
+              # Remove commas and normalize spacing
+              cleaned=$(echo "$input" | tr -d ',')
             
-              # normalize time scale
+              # Extract time and unit inside parentheses (e.g., ( 250.30ns))
+              time=$(echo "$cleaned" | grep -oP '\(\s*\K[0-9.]+(?=[a-zµ]+)')
+              unit=$(echo "$cleaned" | grep -oP '\(\s*[0-9.]+\K[a-zµ]+')
+            
+              # Fallback if unit detection failed
+              [[ -z "$unit" ]] && unit="ns"
+            
+              # Convert based on unit
               case "$unit" in
                 ns) echo "$time" ;;
                 µs) awk "BEGIN {printf \"%.6f\", $time * 1000}" ;;
@@ -85,7 +80,7 @@ jobs:
                 *)  echo "" ;;
               esac
             }
-
+          
             base_ns=$(parse_time_ns "$base_line")
             contender_ns=$(parse_time_ns "$contender_line")
           
