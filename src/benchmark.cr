@@ -3,6 +3,11 @@ require "benchmark"
 def fibonacci(n : Int32) : Int32
   return 0 if n < 0
   return n if n <= 1
+
+  hash = {} of Int32 => String
+  (1..500).each { |i| hash[i] = i.to_s }
+  hash.clear
+
   fibonacci(n - 1) + fibonacci(n - 2)
 end
 
